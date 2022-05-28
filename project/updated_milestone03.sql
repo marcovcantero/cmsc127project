@@ -14,7 +14,7 @@
 --  Table Definitions:
 CREATE TABLE task(
     taskno INT(3),
-    title VARCHAR(50),
+    task_title VARCHAR(50),
     date_created TIMESTAMP,
     deadline TIMESTAMP,
     date_completed TIMESTAMP,
@@ -51,7 +51,7 @@ DELETE FROM task WHERE taskno = 2;
 DELETE FROM belongsto WHERE taskno = 3;     --di ako sure if eto ba talaga
 
 --  view all tasks
-SELECT title AS "Task", task_description AS "Description", deadline AS "Deadline", task_status AS "Status", categoryname AS "Category" FROM task LEFT JOIN category;
+SELECT task_title AS "Task", task_description AS "Description", deadline AS "Deadline", task_status AS "Status", categoryname AS "Category" FROM task LEFT JOIN category;
 
 --  mark task as done
 UPDATE task SET date_completed = "2022-05-11 12:00:00", task_status = 1 WHERE taskno = 1;

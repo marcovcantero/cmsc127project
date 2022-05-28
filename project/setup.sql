@@ -3,7 +3,7 @@ CREATE DATABASE task_db;
 USE task_db;
 CREATE TABLE task(
     taskno INT(3),
-    title VARCHAR(50),
+    task_title VARCHAR(50),
     date_created TIMESTAMP,
     deadline TIMESTAMP,
     date_completed TIMESTAMP,

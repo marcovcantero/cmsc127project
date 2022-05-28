@@ -1,6 +1,5 @@
 import mysql.connector as mariadb
 
-# todo: create sql set up file that creates user 
 # establish connection to mariadb database
 db = mariadb.connect(
     host='localhost', 
@@ -18,9 +17,9 @@ cursor = db.cursor()
 # for x in cursor:
 #     print(x)
 
-cursor.execute("INSERT INTO task (taskno, task_title, date_created, deadline, task_description) VALUES (1, 'CMSC 127 Project SQL', '2022-05-02 17:00:00', '2022-05-11 23:59:59', 'Create an SQL file containing all your table definitions.'), (2, 'CMSC 127 Project Application', '2022-04-18 08:00:00', '2022-06-03 08:00:00', 'A task record system where you can list tasks and provide groupings and deadlines.')")
-for x in cursor:
-    print(x)
+#cursor.execute("INSERT INTO task (taskno, task_title, date_created, deadline, task_description) VALUES (1, 'CMSC 127 Project SQL', '2022-05-02 17:00:00', '2022-05-11 23:59:59', 'Create an SQL file containing all your table definitions.'), (2, 'CMSC 127 Project Application', '2022-04-18 08:00:00', '2022-06-03 08:00:00', 'A task record system where you can list tasks and provide groupings and deadlines.')")
+#for x in cursor:
+#    print(x)
 
 def app_loop(choice):
     while choice != 0:
