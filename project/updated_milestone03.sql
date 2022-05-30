@@ -13,17 +13,17 @@
 --  ddl
 --  Table Definitions:
 CREATE TABLE task(
-    taskno INT(3),
+    taskno INT AUTO_INCREMENT,
     task_title VARCHAR(50),
-    date_created TIMESTAMP,
-    deadline TIMESTAMP,
-    date_completed TIMESTAMP,
+    date_created DATE,
+    deadline DATE,
+    date_completed DATE,
     task_description VARCHAR(100),
     task_status BOOLEAN,
     CONSTRAINT task_taskno_pk PRIMARY KEY(taskno)
     );
 CREATE TABLE category(
-    categoryno INT(3),
+    categoryno INT AUTO_INCREMENT,
     categoryname VARCHAR(50),
     categorycolor VARCHAR(20),
     CONSTRAINT category_categoryno_pk PRIMARY KEY(categoryno)

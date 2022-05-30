@@ -2,18 +2,18 @@
 CREATE DATABASE task_db;
 USE task_db;
 CREATE TABLE task(
-    taskno INT(3),
+    taskno INT(3) AUTO_INCREMENT,
     task_title VARCHAR(50),
-    date_created TIMESTAMP,
-    deadline TIMESTAMP,
-    date_completed TIMESTAMP,
+    date_created DATE,
+    deadline DATE,
+    date_completed DATE NULL,
     task_description VARCHAR(100),
-    task_status BOOLEAN,
+    task_status BOOLEAN DEFAULT 0,
     CONSTRAINT task_taskno_pk PRIMARY KEY(taskno)
     );
 
 CREATE TABLE category(
-    categoryno INT(3),
+    categoryno INT(3) AUTO_INCREMENT,
     categoryname VARCHAR(50),
     categorycolor VARCHAR(20),
     CONSTRAINT category_categoryno_pk PRIMARY KEY(categoryno)
