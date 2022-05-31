@@ -43,18 +43,29 @@ def checkDatabase():
 
 def addTask(db, cursor):
     try:
-        taskTitle = input("\nEnter task title: ")
         while True:
-            dateCreated = input("Enter date created (YYYY-MM-DD): ")
-            if validateDateFormat(dateCreated) == True:
+            taskTitle = input("\nEnter new task title: ")
+            if taskTitle != "":
                 break
+            else:
+                print("\nTask title must not be empty.")
         while True:
-            deadline = input("Enter deadline (YYYY-MM-DD): ")
-            if validateDateFormat(deadline) == True:
-                if validateDate(dateCreated, deadline) == True:
+            dateCreated = input("\nEnter date created (YYYY-MM-DD): ")
+            if dateCreated != "":
+                if validateDateFormat(dateCreated) == True:
                     break
-                else:
-                    print("Invalid deadline. Deadline must not be before the date created.")
+            else:
+                print("\nDate created must not be empty.")
+        while True:
+            deadline = input("\nEnter deadline (YYYY-MM-DD): ")
+            if deadline != "":
+                if validateDateFormat(deadline) == True:
+                    if validateDate(dateCreated, deadline) == True:
+                        break
+                    else:
+                        print("\nInvalid deadline. Deadline must not be before the date created.")
+            else:
+                print("\nDeadline must not be empty.")
         taskDescription = input("Enter task description: ")
         cursor.execute("INSERT INTO task (task_title, date_created, deadline, task_description) VALUES (%s, %s, %s, %s)", (taskTitle, dateCreated, deadline, taskDescription))
         db.commit()
@@ -74,7 +85,12 @@ def editTaskTitle(db, cursor):
         if not record:
             print("\nThere are no tasks that match.")
             return
-        taskTitle = input("Enter new task title: ")
+        while True:
+            taskTitle = input("\nEnter new task title: ")
+            if taskTitle != "":
+                break
+            else:
+                print("\nTask title must not be empty.")
         cursor.execute("UPDATE task SET task_title = %s WHERE taskno = %s", (taskTitle, taskNo))
         db.commit()
         print("\nEdited task title successfully.")
@@ -95,18 +111,21 @@ def editDateCreated(db, cursor):
             print("\nThere are no tasks that match.")
             return
         while True:
-            dateCreated = input("Enter new date created (YYYY-MM-DD): ")
-            if validateDateFormat(dateCreated) == True:
-                if validateDate(dateCreated, deadline) == True:
-                    if dateCompleted != "None":
-                        if validateDate(dateCreated, dateCompleted) == True:
-                            break
+            dateCreated = input("\nEnter new date created (YYYY-MM-DD): ")
+            if dateCreated != "":
+                if validateDateFormat(dateCreated) == True:
+                    if validateDate(dateCreated, deadline) == True:
+                        if dateCompleted != "None":
+                            if validateDate(dateCreated, dateCompleted) == True:
+                                break
+                            else:
+                                print("\nInvalid date created. Date created must not be after the date completed.")
                         else:
-                            print("Invalid date created. Date created must not be after the date completed.")
+                            break
                     else:
-                        break
-                else:
-                    print("Invalid date created. Date created must not be after the deadline.")
+                        print("\nInvalid date created. Date created must not be after the deadline.")
+            else:
+                print("\nDate created must not be empty.")
         cursor.execute("UPDATE task SET date_created = %s WHERE taskno = %s", (dateCreated, taskNo))
         db.commit()
         print("\nEdited date created successfully.")
@@ -126,12 +145,15 @@ def editDeadline(db, cursor):
             print("\nThere are no tasks that match.")
             return
         while True:
-            deadline = input("Enter new deadline (YYYY-MM-DD): ")
-            if validateDateFormat(deadline) == True:
-                if validateDate(dateCreated, deadline) == True:
-                    break
-                else:
-                    print("Invalid deadline. Deadline must not be before the date created.")
+            deadline = input("\nEnter new deadline (YYYY-MM-DD): ")
+            if deadline != "":
+                if validateDateFormat(deadline) == True:
+                    if validateDate(dateCreated, deadline) == True:
+                        break
+                    else:
+                        print("\nInvalid deadline. Deadline must not be before the date created.")
+            else:
+                print("\nDeadline must not be empty.")
         cursor.execute("UPDATE task SET deadline = %s WHERE taskno = %s", (deadline, taskNo))
         db.commit()
         print("\nEdited deadline successfully.")
@@ -151,12 +173,12 @@ def editDateCompleted(db, cursor):
             print("\nThere are no tasks that match.")
             return
         while True:
-            dateCompleted = input("Enter new date completed (YYYY-MM-DD): ")
+            dateCompleted = input("\nEnter new date completed (YYYY-MM-DD): ")
             if validateDateFormat(dateCompleted) == True:
                 if validateDate(dateCreated, dateCompleted) == True:
                     break
                 else:
-                    print("Invalid date completed. Date completed must not be before the date created.")
+                    print("\nInvalid date completed. Date completed must not be before the date created.")
         cursor.execute("UPDATE task SET date_completed = %s WHERE taskno = %s", (dateCompleted, taskNo))
         db.commit()
         print("\nEdited date completed successfully.")
