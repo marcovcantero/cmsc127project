@@ -2,26 +2,26 @@
 CREATE DATABASE task_db;
 USE task_db;
 CREATE TABLE task(
-    taskno INT(3) AUTO_INCREMENT,
-    task_title VARCHAR(50),
-    date_created DATE,
-    deadline DATE,
+    taskno INT(3) NOT NULL AUTO_INCREMENT,
+    task_title VARCHAR(50) NOT NULL,
+    date_created DATE NOT NULL,
+    deadline DATE NOT NULL,
     date_completed DATE NULL,
     task_description VARCHAR(100),
-    task_status BOOLEAN DEFAULT 0,
+    task_status BOOLEAN DEFAULT 0 NOT NULL,
     CONSTRAINT task_taskno_pk PRIMARY KEY(taskno)
     );
 
 CREATE TABLE category(
-    categoryno INT(3) AUTO_INCREMENT,
-    categoryname VARCHAR(50),
+    categoryno INT(3) NOT NULL AUTO_INCREMENT,
+    categoryname VARCHAR(50) NOT NULL,
     categorycolor VARCHAR(20),
     CONSTRAINT category_categoryno_pk PRIMARY KEY(categoryno)
     );
 
 CREATE TABLE belongsto(
-    taskno INT(3),
-    categoryno INT(3),
+    taskno INT(3) NOT NULL,
+    categoryno INT(3) NOT NULL,
     CONSTRAINT belongsto_tasknocategoryno_pk PRIMARY KEY(taskno, categoryno),
     CONSTRAINT fk_taskno FOREIGN KEY(taskno) REFERENCES task(taskno),
     CONSTRAINT fk_categoryno FOREIGN KEY(categoryno) REFERENCES category(categoryno)
