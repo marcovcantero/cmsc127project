@@ -15,7 +15,6 @@ CREATE TABLE task(
 CREATE TABLE category(
     categoryno INT(3) NOT NULL AUTO_INCREMENT,
     categoryname VARCHAR(50) NOT NULL,
-    categorycolor VARCHAR(20),
     CONSTRAINT category_categoryno_pk PRIMARY KEY(categoryno)
     );
 
