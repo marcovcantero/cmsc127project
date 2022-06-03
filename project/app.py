@@ -97,7 +97,7 @@ def addTask(db, cursor):
         db.commit()
         cursor.execute("SELECT * FROM task ORDER BY taskno DESC LIMIT 1")
         record = cursor.fetchone()
-        print(f"\nAdded task #{str(record[0])} {taskTitle} successfully.")
+        print(f"\nAdded Task #{str(record[0])} {taskTitle} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add task. Error: {e}")
@@ -132,7 +132,7 @@ def editTaskTitle(db, cursor):
                 return
         cursor.execute("UPDATE task SET task_title = %s WHERE taskno = %s", (taskTitle, taskNo))
         db.commit()
-        print(f"\nEdited title of task #{taskNo} to {taskTitle} successfully.")
+        print(f"\nEdited title of Task #{taskNo} to {taskTitle} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit task title. Error: {e}")
@@ -180,7 +180,7 @@ def editDateCreated(db, cursor):
                 return
         cursor.execute("UPDATE task SET date_created = %s WHERE taskno = %s", (dateCreated, taskNo))
         db.commit()
-        print(f"\nEdited date created of task #{taskNo} to {dateCreated} successfully.")
+        print(f"\nEdited date created of Task #{taskNo} to {dateCreated} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit date created. Error: {e}")
@@ -221,7 +221,7 @@ def editDeadline(db, cursor):
                 return
         cursor.execute("UPDATE task SET deadline = %s WHERE taskno = %s", (deadline, taskNo))
         db.commit()
-        print(f"\nEdited deadline of task #{taskNo} to {deadline} successfully.")
+        print(f"\nEdited deadline of Task #{taskNo} to {deadline} successfully.")
         
     except mariadb.Error as e:
         print(F"Failed to edit deadline. Error: {e}")
@@ -262,7 +262,7 @@ def editDateCompleted(db, cursor):
                 return
         cursor.execute("UPDATE task SET date_completed = %s WHERE taskno = %s", (dateCompleted, taskNo))
         db.commit()
-        print(f"\nEdited date completed of task #{taskNo} to {dateCompleted} successfully.")
+        print(f"\nEdited date completed of Task #{taskNo} to {dateCompleted} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit date completed. Error: {e}")
@@ -294,7 +294,7 @@ def editTaskDescription(db, cursor):
                 "\nTask description must not be empty."
         cursor.execute("UPDATE task SET task_description = %s WHERE taskno = %s", (taskDescription, taskNo))
         db.commit()
-        print(f"\nEdited description of task #{taskNo} to {taskDescription} successfully.")
+        print(f"\nEdited description of Task #{taskNo} to {taskDescription} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit task description. Error: {e}")
@@ -317,14 +317,14 @@ def deleteTask(db, cursor):
         if not record:
             print("\nThere are no tasks that match.")
             return
-        cursor.execute("DELETE FROM task WHERE taskno = %s", (taskNo,))
         cursor.execute("DELETE FROM belongsto WHERE taskno = %s", (taskNo,))
+        cursor.execute("DELETE FROM task WHERE taskno = %s", (taskNo,))
         # sorts the taskno after deleting a task
         cursor.execute("SET @count = 0")
         cursor.execute("UPDATE task SET taskno = @count:= @count + 1")
         cursor.execute("ALTER TABLE task AUTO_INCREMENT = 1")
         db.commit()
-        print(f"\nDeleted task #{taskNo} successfully.")
+        print(f"\nDeleted Task #{taskNo} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to delete task. Error: {e}")
@@ -339,8 +339,7 @@ def viewAllTask():
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print(f"\nTask #{row[0]}")
-            print(f"Task Title: {row[1]}")
+            print(f"\nTask #{row[0]}: {row[1]}")
             print(f"Date Created: {row[2]}")
             print(f"Deadline: {row[3]}")
             print(f"Date Completed: {row[4]}")
@@ -382,7 +381,7 @@ def addCategory(db, cursor):
         db.commit()
         cursor.execute("SELECT * FROM category ORDER BY categoryno DESC LIMIT 1")
         record = cursor.fetchone()
-        print(f"\nAdded category #{str(record[0])} {categoryName} successfully.")
+        print(f"\nAdded Category #{str(record[0])} {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add category. Error: {e}")
@@ -409,7 +408,7 @@ def editCategoryName(db, cursor):
             return
         while True:
             print("\nEnter 0 to cancel.")
-            categoryName = input("Enter new category name: ")
+            categoryName = input("\nEnter new category name: ")
             if categoryName != "":
                 break
             else:
@@ -418,7 +417,7 @@ def editCategoryName(db, cursor):
                 return        
         cursor.execute("UPDATE category SET categoryname = %s WHERE categoryno = %s", (categoryName, categoryNo))
         db.commit()
-        print(f"\nEdited name of category #{categoryNo} to {categoryName} successfully.")
+        print(f"\nEdited name of Category #{categoryNo} to {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit category name. Error: {e}")
@@ -448,7 +447,7 @@ def deleteCategory(db, cursor):
         cursor.execute("UPDATE category SET categoryno = @count:= @count + 1")
         cursor.execute("ALTER TABLE category AUTO_INCREMENT = 1")
         db.commit()
-        print(f"\nDeleted category #{categoryNo} {str(record[1])} successfully.")
+        print(f"\nDeleted Category #{categoryNo} {str(record[1])} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to delete category. Error: {e}")
@@ -460,9 +459,9 @@ def viewCategory():
             return
         cursor.execute("SELECT * FROM category")
         record1 = cursor.fetchall()
+        print("\nCategory List\n")
         for row in record1:
-            print(f"\nCategory #{row[0]}")
-            print(f"Category Name: {row[1]}")
+            print(f"Category #{row[0]}: {row[1]}")
         while True:
             print("\nEnter 0 to cancel.")
             categoryNo = input("\nEnter category number: ")
@@ -486,8 +485,7 @@ def viewCategory():
         print("\nTotal number of tasks in this category: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print(f"\nTask #{row[0]}")
-            print(f"Task Title: {row[1]}")
+            print(f"\nTask #{row[0]}: {row[1]}")
             print(f"Date Created: {row[2]}")
             print(f"Deadline: {row[3]}")
             print(f"Date Completed: {row[4]}")
@@ -536,6 +534,8 @@ def addTasktoCategory(db, cursor):
     try:
         if checkTasks() == False:
             return
+        if checkCategory() == False:
+            return
         while True:
             print("\nEnter 0 to cancel.")
             taskNo = input("\nEnter task number: ")
@@ -569,7 +569,7 @@ def addTasktoCategory(db, cursor):
         categoryName = str(record2[1])
         cursor.execute("INSERT INTO belongsto VALUES (%s, %s)", (taskNo, categoryNo))
         db.commit()
-        print(f"\nAdded task #{taskNo} to category #{categoryNo} {categoryName} successfully.")
+        print(f"\nAdded Task #{taskNo} to Category #{categoryNo} {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add task to category. Error: {e}")
@@ -606,13 +606,12 @@ def viewTaskPerDay():
         cursor.execute("SELECT * FROM task WHERE deadline = %s", (date,))
         data = cursor.fetchall()
         if not data:
-            print("\nThere are no tasks for this date.")
+            print("\nThere are no tasks for this day.")
             return
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print(f"\nTask #{row[0]}")
-            print(f"Task Title: {row[1]}")
+            print(f"\nTask #{row[0]}: {row[1]}")
             print(f"Date Created: {row[2]}")
             print(f"Deadline: {row[3]}")
             print(f"Date Completed: {row[4]}")
@@ -644,13 +643,12 @@ def viewTaskPerMonth():
         cursor.execute("SELECT * FROM task WHERE deadline LIKE %s", (date + "%",))
         data = cursor.fetchall()
         if not data:
-            print("\nThere are no tasks for this specific month and year.")
+            print("\nThere are no tasks for this month.")
             return
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print(f"\nTask #{row[0]}")
-            print(f"Task Title: {row[1]}")
+            print(f"\nTask #{row[0]}: {row[1]}")
             print(f"Date Created: {row[2]}")
             print(f"Deadline: {row[3]}")
             print(f"Date Completed: {row[4]}")
