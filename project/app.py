@@ -93,7 +93,7 @@ def addTask(db, cursor):
                 print("\nTask description must not be empty.")
         if taskDescription == "0":
                 return
-        cursor.execute("INSERT INTO task (task_title, date_created, deadline, task_description) VALUES (%s, %s, %s, %s)", (taskTitle, dateCreated, deadline, taskDescription))
+        cursor.execute("INSERT INTO task (task_title, date_created, deadline, task_description) VALUES (%s, CURDATE(), %s, %s)", (taskTitle, deadline, taskDescription))
         db.commit()
         cursor.execute("SELECT * FROM task ORDER BY taskno DESC LIMIT 1")
         record = cursor.fetchone()
@@ -136,54 +136,6 @@ def editTaskTitle(db, cursor):
         
     except mariadb.Error as e:
         print(f"Failed to edit task title. Error: {e}")
-        
-def editDateCreated(db, cursor):
-    try:
-        if checkTasks() == False:
-            return
-        while True:
-            print("\nEnter 0 to cancel.")
-            taskNo = input("\nEnter task number: ")
-            if taskNo != "":
-                break
-            else:
-                "\nTask number must not be empty."
-        if taskNo == "0":
-            return
-        cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
-        record = cursor.fetchone()
-        deadline = str(record[3])
-        dateCompleted = str(record[4])
-        if not record:
-            print("\nThere are no tasks that match.")
-            return
-        while True:
-            print("\nEnter 0 to cancel.")
-            dateCreated = input("\nEnter new date created (YYYY-MM-DD): ")
-            if dateCreated != "":
-                if validateDateFormat(dateCreated) == True:
-                    if validateDate(dateCreated, deadline) == True:
-                        if dateCompleted != "None":
-                            if validateDate(dateCreated, dateCompleted) == True:
-                                break
-                            else:
-                                print("\nInvalid date created. Date created must not be after the date completed.")
-                        else:
-                            break
-                    else:
-                        print("\nInvalid date created. Date created must not be after the deadline.")
-            elif dateCreated == "0":
-                return
-            else:
-                print("\nDate created must not be empty.")
-        if dateCreated == "0":
-                return
-        cursor.execute("UPDATE task SET date_created = %s WHERE taskno = %s", (dateCreated, taskNo))
-        db.commit()
-        print(f"\nEdited date created of Task #{taskNo} to {dateCreated} successfully.")
-        
-    except mariadb.Error as e:
-        print(f"Failed to edit date created. Error: {e}")
         
 def editDeadline(db, cursor):
     try:
@@ -354,12 +306,10 @@ def editOptions(option):
         case '1':
             editTaskTitle(db, cursor)
         case '2':
-            editDateCreated(db, cursor)
-        case '3':
             editDeadline(db, cursor)
-        case '4':
+        case '3':
             editDateCompleted(db, cursor)
-        case '5':
+        case '4':
             editTaskDescription(db, cursor)
         case '0':
             taskMenu()
@@ -663,7 +613,7 @@ def taskMenu(choice):
             case '1':
                 addTask(db, cursor)
             case '2':
-                print('\n------EDIT TASK------', '[1] Edit Task Title', '[2] Edit Date Created', '[3] Edit Deadline', '[4] Edit Date Completed', '[5] Edit Task Description', '[0] Back', sep='\n')
+                print('\n------EDIT TASK------', '[1] Edit Task Title', '[2] Edit Deadline', '[3] Edit Date Completed', '[4] Edit Task Description', '[0] Back', sep='\n')
                 option = input("\nEdit option: ")
                 editOptions(option)
             case '3':
@@ -684,7 +634,7 @@ def taskMenu(choice):
                 mainMenu(option)
             case _:
                 print("\nInvalid input.")
-        print('\n------TASK MENU------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+        print('\n------TASK MENU------', '[1] Add Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
         choice = input("\nChoice: ")
 
 # app loop which matches choice to its corresponding action
@@ -712,7 +662,7 @@ def mainMenu(choice):
     while choice != 0:
         match choice:
             case '1':
-                print('\n------TASK MENU------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+                print('\n------TASK MENU------', '[1] Add Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
                 option = input("\nChoice: ")
                 taskMenu(option)
             case '2':
