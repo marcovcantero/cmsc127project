@@ -362,7 +362,7 @@ def editOptions(option):
         case '5':
             editTaskDescription(db, cursor)
         case '0':
-            main()
+            taskMenu()
         case _:
             print("\nInvalid input.")
 #add category
@@ -441,6 +441,7 @@ def deleteCategory(db, cursor):
         if not record:
             print("\nThere are no categories that match.")
             return
+        cursor.execute("DELETE FROM belongsto WHERE categoryno = %s", (categoryNo,))
         cursor.execute("DELETE FROM category WHERE categoryno = %s", (categoryNo,))
         # sorts the categoryno after deleting a category
         cursor.execute("SET @count = 0")
@@ -516,21 +517,20 @@ def markTaskAsDone(db, cursor):
             print("\nThere are no tasks that match.")
             return
         taskStatus = str(record[6])
-        while True:
-            if taskStatus == "0":
-                cursor.execute("UPDATE task SET date_Completed = CURDATE(), task_status = 1 WHERE taskno = %s", (taskNo,))
-                break
-            else:
-                print(f"\nTask #{taskNo} is already marked as done.")
-                break
-        db.commit()
-        print(f"\nTask #{taskNo} is marked as done.")
-
+        if taskStatus == "0":
+            cursor.execute("UPDATE task SET date_Completed = CURDATE(), task_status = 1 WHERE taskno = %s", (taskNo,))
+            db.commit()
+            print(f"\nTask #{taskNo} is marked as done.")
+            return
+        else:
+            print(f"\nTask #{taskNo} is already marked as done.")
+            return
+        
     except mariadb.Error as e:
         print(f"Failed to mark the task as done. Error: {e}")
 
 # Add a Task to a Category
-def addTasktoCategory(db, cursor):
+def addTaskToCategory(db, cursor):
     try:
         if checkTasks() == False:
             return
@@ -582,7 +582,7 @@ def viewOptions(option):
         case '2':
             viewTaskPerMonth()
         case '0':
-            main()
+            taskMenu()
         case _:
             print("\nInvalid input.")
 
@@ -657,8 +657,7 @@ def viewTaskPerMonth():
     except mariadb.Error as e:
         print(f"Failed to view tasks. Error: {e}")
 
-# app loop which matches choice to its corresponding action
-def app_loop(choice):
+def taskMenu(choice):
     while choice != 0:
         match choice:
             case '1':
@@ -674,19 +673,52 @@ def app_loop(choice):
             case '5':
                 markTaskAsDone(db, cursor)
             case '6':
-                addCategory(db, cursor)
+                addTaskToCategory(db, cursor)
             case '7':
-                editCategoryName(db, cursor)
-            case '8':
-                deleteCategory(db, cursor)
-            case '9':
-                viewCategory()
-            case '10':
-                addTasktoCategory(db, cursor)
-            case '11':
                 print('\n------VIEW TASK PER DAY, MONTH------', '[1] View Task per Day', '[2] View Task per Month', '[0] Back', sep='\n')
                 option = input("\nView option: ")
                 viewOptions(option)
+            case '0':
+                print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+                option = input("\nChoice: ")
+                mainMenu(option)
+            case _:
+                print("\nInvalid input.")
+        print('\n------TASK MENU------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+        choice = input("\nChoice: ")
+
+# app loop which matches choice to its corresponding action
+def categoryMenu(choice):
+    while choice != 0:
+        match choice:
+            case '1':
+                addCategory(db, cursor)
+            case '2':
+                editCategoryName(db, cursor)
+            case '3':
+                deleteCategory(db, cursor)
+            case '4':
+                viewCategory()
+            case '0':
+                print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+                option = input("\nChoice: ")
+                mainMenu(option)
+            case _:
+                print("\nInvalid input.")
+        print('\n------CATEGORY MENU------', '[1] Add Category', '[2] Edit Category', '[3] Delete Category', '[4] View Category', '[0] Return', sep='\n')
+        choice = input("\nChoice: ")
+        
+def mainMenu(choice):
+    while choice != 0:
+        match choice:
+            case '1':
+                print('\n------TASK MENU------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+                option = input("\nChoice: ")
+                taskMenu(option)
+            case '2':
+                print('\n------CATEGORY MENU------', '[1] Add Category', '[2] Edit Category', '[3] Delete Category', '[4] View Category', '[0] Return', sep='\n')
+                option = input("\nChoice: ")
+                categoryMenu(option)
             case '0':
                 cursor.close()
                 db.close()
@@ -694,12 +726,9 @@ def app_loop(choice):
                 quit()
             case _:
                 print("\nInvalid input.")
-        print('\n------TO-DO APP------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add Category', '[7] Edit Category', '[8] Delete Category', '[9] View Category', '[10] Add a Task to a Category', '[11] View Task (per day, month)', '[0] Exit', sep='\n')
+        print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
         choice = input("\nChoice: ")
-        
-def main():
-    print('\n------TO-DO APP------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add Category', '[7] Edit Category', '[8] Delete Category', '[9] View Category', '[10] Add a Task to a Category', '[11] View Task (per day, month)', '[0] Exit', sep='\n')
-    choice = input("\nChoice: ")
-    app_loop(choice)
 
-main()
+print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+choice = input("\nChoice: ")
+mainMenu(choice)
