@@ -63,16 +63,6 @@ def addTask(db, cursor):
                 return
         while True:
             print("\nEnter 0 to cancel.")
-            dateCreated = input("\nEnter date created (YYYY-MM-DD): ")
-            if dateCreated != "":
-                if validateDateFormat(dateCreated) == True:
-                    break
-            else:
-                print("\nDate created must not be empty.")
-        if dateCreated == "0":
-                return
-        while True:
-            print("\nEnter 0 to cancel.")
             deadline = input("\nEnter deadline (YYYY-MM-DD): ")
             if deadline != "":
                 if validateDateFormat(deadline) == True:
