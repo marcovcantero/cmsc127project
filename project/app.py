@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from dateutil import parser
 import mysql.connector as mariadb
 
@@ -20,8 +20,8 @@ def validateDateFormat(date):
     except ValueError:
         print("Invalid date. Date format should be YYYY-MM-DD.")
         return False
-    
-def validateDate(date1, date2):
+# check if date2 does not come before date1
+def validateTwoDates(date1, date2):
     try:
         date1 = parser.parse(date1)
         date2 = parser.parse(date2)
@@ -30,8 +30,17 @@ def validateDate(date1, date2):
             return True
     except:
         return False
-        
-    
+# check if date does not come before date today
+def validateDate(date):
+    try:
+        today = datetime.now()
+        date1 = parser.parse(date) + timedelta(days=1)
+        dateDiff = date1 - today
+        if dateDiff.days >= 0:
+            return True
+    except:
+        return False
+# return false if no tasks in task table, otherwise true
 def checkTasks():
     cursor.execute("SELECT * FROM task")
     record = cursor.fetchone()
@@ -40,7 +49,7 @@ def checkTasks():
         return False
     else:
         return True
-
+# return false if no categories in category table, otherwise true
 def checkCategory():
     cursor.execute("SELECT * FROM category")
     record = cursor.fetchone()
@@ -49,45 +58,60 @@ def checkCategory():
         return False
     else:
         return True
-
+# add task to database
 def addTask(db, cursor):
     try:
+        print("\nEnter 0 to cancel at anytime.")
         while True:
             taskTitle = input("\nEnter new task title: ")
             if taskTitle != "":
                 break
             else:
                 print("\nTask title must not be empty.")
-        while True:
-            dateCreated = input("\nEnter date created (YYYY-MM-DD): ")
-            if dateCreated != "":
-                if validateDateFormat(dateCreated) == True:
-                    break
-            else:
-                print("\nDate created must not be empty.")
+        if taskTitle == "0":
+                return
         while True:
             deadline = input("\nEnter deadline (YYYY-MM-DD): ")
             if deadline != "":
                 if validateDateFormat(deadline) == True:
-                    if validateDate(dateCreated, deadline) == True:
+                    if validateDate(deadline) == True:
                         break
                     else:
                         print("\nInvalid deadline. Deadline must not be before the date created.")
             else:
                 print("\nDeadline must not be empty.")
-        taskDescription = input("Enter task description: ")
-        cursor.execute("INSERT INTO task (task_title, date_created, deadline, task_description) VALUES (%s, %s, %s, %s)", (taskTitle, dateCreated, deadline, taskDescription))
+        if deadline == "0":
+                return
+        while True:
+            taskDescription = input("\nEnter task description: ")
+            if taskDescription != "":
+                break
+            else:
+                print("\nTask description must not be empty.")
+        if taskDescription == "0":
+                return
+        cursor.execute("INSERT INTO task (task_title, date_created, deadline, task_description) VALUES (%s, CURDATE(), %s, %s)", (taskTitle, deadline, taskDescription))
         db.commit()
-        print("\nAdded task successfully.")
+        cursor.execute("SELECT * FROM task ORDER BY taskno DESC LIMIT 1")
+        record = cursor.fetchone()
+        print(f"\nAdded Task #{str(record[0])} {taskTitle} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add task. Error: {e}")
-        
+# edit title of task
 def editTaskTitle(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+            return
         # check if taskNo exists first in database, if not return from function
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
@@ -100,53 +124,28 @@ def editTaskTitle(db, cursor):
                 break
             else:
                 print("\nTask title must not be empty.")
+        if taskTitle == "0":
+                return
         cursor.execute("UPDATE task SET task_title = %s WHERE taskno = %s", (taskTitle, taskNo))
         db.commit()
-        print("\nEdited task title successfully.")
+        print(f"\nEdited title of Task #{taskNo} to {taskTitle} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit task title. Error: {e}")
-        
-def editDateCreated(db, cursor):
-    try:
-        if checkTasks() == False:
-            return
-        taskNo = input("\nEnter task number: ")
-        cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
-        record = cursor.fetchone()
-        deadline = str(record[3])
-        dateCompleted = str(record[4])
-        if not record:
-            print("\nThere are no tasks that match.")
-            return
-        while True:
-            dateCreated = input("\nEnter new date created (YYYY-MM-DD): ")
-            if dateCreated != "":
-                if validateDateFormat(dateCreated) == True:
-                    if validateDate(dateCreated, deadline) == True:
-                        if dateCompleted != "None":
-                            if validateDate(dateCreated, dateCompleted) == True:
-                                break
-                            else:
-                                print("\nInvalid date created. Date created must not be after the date completed.")
-                        else:
-                            break
-                    else:
-                        print("\nInvalid date created. Date created must not be after the deadline.")
-            else:
-                print("\nDate created must not be empty.")
-        cursor.execute("UPDATE task SET date_created = %s WHERE taskno = %s", (dateCreated, taskNo))
-        db.commit()
-        print("\nEdited date created successfully.")
-        
-    except mariadb.Error as e:
-        print(f"Failed to edit date created. Error: {e}")
-        
+# edit deadline of task
 def editDeadline(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+            return
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
         dateCreated = str(record[2])
@@ -157,24 +156,36 @@ def editDeadline(db, cursor):
             deadline = input("\nEnter new deadline (YYYY-MM-DD): ")
             if deadline != "":
                 if validateDateFormat(deadline) == True:
-                    if validateDate(dateCreated, deadline) == True:
+                    if validateDate(deadline) == True:
                         break
                     else:
                         print("\nInvalid deadline. Deadline must not be before the date created.")
+            elif deadline == "0":
+                return
             else:
                 print("\nDeadline must not be empty.")
+        if deadline == "0":
+                return
         cursor.execute("UPDATE task SET deadline = %s WHERE taskno = %s", (deadline, taskNo))
         db.commit()
-        print("\nEdited deadline successfully.")
+        print(f"\nEdited deadline of Task #{taskNo} to {deadline} successfully.")
         
     except mariadb.Error as e:
         print(F"Failed to edit deadline. Error: {e}")
-        
+# edit date completed of task
 def editDateCompleted(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+            return
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
         dateCreated = str(record[2])
@@ -183,57 +194,86 @@ def editDateCompleted(db, cursor):
             return
         while True:
             dateCompleted = input("\nEnter new date completed (YYYY-MM-DD): ")
-            if validateDateFormat(dateCompleted) == True:
-                if validateDate(dateCreated, dateCompleted) == True:
-                    break
-                else:
-                    print("\nInvalid date completed. Date completed must not be before the date created.")
+            if dateCompleted != "":
+                if validateDateFormat(dateCompleted) == True:   
+                    if validateTwoDates(dateCreated, dateCompleted) == True:
+                        break
+                    else:
+                        print("\nInvalid date completed. Date completed must not be before the date created.")
+            elif dateCompleted == "0":
+                return
+            else:
+                print("\nDate completed must not be empty.")
+        if dateCompleted == "0":
+                return
         cursor.execute("UPDATE task SET date_completed = %s WHERE taskno = %s", (dateCompleted, taskNo))
         db.commit()
-        print("\nEdited date completed successfully.")
+        print(f"\nEdited date completed of Task #{taskNo} to {dateCompleted} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit date completed. Error: {e}")
-        
+# edit description of task
 def editTaskDescription(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+            return
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
         if not record:
             print("\nThere are no tasks that match.")
             return
-        taskDescription = input("Enter new task description: ")
+        while True:
+            taskDescription = input("Enter new task description: ")
+            if taskDescription != "":
+                break
+            else:
+                "\nTask description must not be empty."
         cursor.execute("UPDATE task SET task_description = %s WHERE taskno = %s", (taskDescription, taskNo))
         db.commit()
-        print("\nEdited task description successfully.")
+        print(f"\nEdited description of Task #{taskNo} to {taskDescription} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit task description. Error: {e}")
-        
+# delete task from database
 def deleteTask(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+            return
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
         if not record:
             print("\nThere are no tasks that match.")
             return
+        cursor.execute("DELETE FROM belongsto WHERE taskno = %s", (taskNo,))
         cursor.execute("DELETE FROM task WHERE taskno = %s", (taskNo,))
         # sorts the taskno after deleting a task
         cursor.execute("SET @count = 0")
         cursor.execute("UPDATE task SET taskno = @count:= @count + 1")
         cursor.execute("ALTER TABLE task AUTO_INCREMENT = 1")
         db.commit()
-        print("\nDeleted task successfully.")
+        print(f"\nDeleted Task #{taskNo} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to delete task. Error: {e}")
-        
+# view all tasks in task database
 def viewAllTask():
     try:
         cursor.execute("SELECT * FROM task")
@@ -244,40 +284,47 @@ def viewAllTask():
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print("\nTask No. ", row[0])
-            print("Task Title: ", row[1])
-            print("Date Created: ", row[2])
-            print("Deadline: ", row[3])
-            print("Date Completed: ", row[4])
-            print("Task Description: ", row[5])
-            print("Task Status (0 - Ongoing, 1 - Finished): ", row[6])
+            print(f"\nTask #{row[0]}: {row[1]}")
+            print(f"Date Created: {row[2]}")
+            print(f"Deadline: {row[3]}")
+            print(f"Date Completed: {row[4]}")
+            print(f"Task Description: {row[5]}")
+            print(f"Task Status (0 - Ongoing, 1 - Finished): {row[6]}")
     
     except mariadb.Error as e:
         print(f"Failed to view all tasks. Error: {e}")
-
+# show menu of which attribute of task to edit
 def editOptions(option):
     match option:
         case '1':
             editTaskTitle(db, cursor)
         case '2':
-            editDateCreated(db, cursor)
-        case '3':
             editDeadline(db, cursor)
-        case '4':
+        case '3':
             editDateCompleted(db, cursor)
-        case '5':
+        case '4':
             editTaskDescription(db, cursor)
         case '0':
-            main()
+            taskMenu()
         case _:
             print("\nInvalid input.")
 #add category
 def addCategory(db, cursor):
     try:
-        categoryName = input("\nEnter category name: ")
+        print("\nEnter 0 to cancel.")
+        while True:
+            categoryName = input("\nEnter category name: ")
+            if categoryName != "":
+                break
+            else:
+                print("\nCategory name must not be empty.")
+        if categoryName == "0":
+                return
         cursor.execute("INSERT INTO category (categoryname) VALUES (%s)", (categoryName,))
         db.commit()
-        print("\nAdded category successfully.")
+        cursor.execute("SELECT * FROM category ORDER BY categoryno DESC LIMIT 1")
+        record = cursor.fetchone()
+        print(f"\nAdded Category #{str(record[0])} {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add category. Error: {e}")
@@ -285,19 +332,34 @@ def addCategory(db, cursor):
 #edit category name
 def editCategoryName(db, cursor):
     try:
+        print("\nEnter 0 to cancel.")
         if checkCategory() == False:
             return
-        categoryNo = input("\nEnter category number: ")
+        while True:
+            categoryNo = input("\nEnter category number: ")
+            if categoryNo != "":
+                break
+            else:
+                print("\nCategory number must not be empty.")
+        if categoryNo == "0":
+                return
         # check if categoryNo exists first in database, if not return from function
         cursor.execute("SELECT * FROM category WHERE categoryno = %s", (categoryNo,))
         record = cursor.fetchone()
         if not record:
             print("\nThere are no categories that match.")
             return
-        categoryName = input("Enter new category name: ")
+        while True:
+            categoryName = input("\nEnter new category name: ")
+            if categoryName != "":
+                break
+            else:
+                print("\nCategory name must not be empty.")
+        if categoryName == "0":
+                return        
         cursor.execute("UPDATE category SET categoryname = %s WHERE categoryno = %s", (categoryName, categoryNo))
         db.commit()
-        print("\nEdited category name successfully.")
+        print(f"\nEdited name of Category #{categoryNo} to {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to edit category name. Error: {e}")
@@ -307,19 +369,28 @@ def deleteCategory(db, cursor):
     try:
         if checkCategory() == False:
             return
-        categoryNo = input("\nEnter category number: ")
+        print("\nEnter 0 to cancel.")
+        while True:
+            categoryNo = input("\nEnter category number: ")
+            if categoryNo != "":
+                break
+            else:
+                "\nCategory number must not be empty."
+        if categoryNo == "0":
+                return
         cursor.execute("SELECT * FROM category WHERE categoryno = %s", (categoryNo,))
         record = cursor.fetchone()
         if not record:
             print("\nThere are no categories that match.")
             return
+        cursor.execute("DELETE FROM belongsto WHERE categoryno = %s", (categoryNo,))
         cursor.execute("DELETE FROM category WHERE categoryno = %s", (categoryNo,))
         # sorts the categoryno after deleting a category
         cursor.execute("SET @count = 0")
         cursor.execute("UPDATE category SET categoryno = @count:= @count + 1")
         cursor.execute("ALTER TABLE category AUTO_INCREMENT = 1")
         db.commit()
-        print("\nDeleted category successfully.")
+        print(f"\nDeleted Category #{categoryNo} {str(record[1])} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to delete category. Error: {e}")
@@ -329,76 +400,117 @@ def viewCategory():
     try:
         if checkCategory() == False:
             return
-        categoryNo = input("\nEnter category number: ")
-        cursor.execute("SELECT categoryname FROM category WHERE categoryno = %s", (categoryNo,))
-        record = cursor.fetchone()
-        if not record:
+        cursor.execute("SELECT * FROM category")
+        record1 = cursor.fetchall()
+        print("\nCategory List\n")
+        for row in record1:
+            print(f"Category #{row[0]}: {row[1]}")
+        print("\nEnter 0 to cancel.")
+        while True:
+            categoryNo = input("\nEnter category number: ")
+            if categoryNo != "":
+                break
+            else:
+                "\nCategory number must not be empty."
+        if categoryNo == "0":
+                return
+        cursor.execute("SELECT * FROM category WHERE categoryno = %s", (categoryNo,))
+        record2 = cursor.fetchone()
+        if not record2:
             print("\nThere are no categories that match.")
             return
-        print("\nCATEGORY: ", record[0])
+        print(f"\nCATEGORY: {str(record2[1])}")
         cursor.execute("SELECT * FROM task WHERE taskno IN (SELECT taskno FROM belongsto WHERE categoryno = %s)", (categoryNo,))
         data = cursor.fetchall()
         if not data:
             print("\nThere are no tasks in this category.")
             return
-        print("\nTotal number of tasks: ", cursor.rowcount)
+        print("\nTotal number of tasks in this category: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print("\nTask No. ", row[0])
-            print("Task Title: ", row[1])
-            print("Date Created: ", row[2])
-            print("Deadline: ", row[3])
-            print("Date Completed: ", row[4])
-            print("Task Description: ", row[5])
-            print("Task Status (0 - Ongoing, 1 - Finished): ", row[6])
+            print(f"\nTask #{row[0]}: {row[1]}")
+            print(f"Date Created: {row[2]}")
+            print(f"Deadline: {row[3]}")
+            print(f"Date Completed: {row[4]}")
+            print(f"Task Description: {row[5]}")
+            print(f"Task Status (0 - Ongoing, 1 - Finished): {row[6]}")
     
     except mariadb.Error as e:
         print(f"Failed to view category. Error: {e}")
 
 # mark Task as Done
-def markTask():
+def markTaskAsDone(db, cursor):
     try:
         if checkTasks() == False:
             return
-        taskNo = input("\nEnter task number: ")
-        # check if taskNo exists first in database, if not return from function
-        cursor.execute("SELECT * FROM task WHERE taskno = %s AND task_status = 0", (taskNo,))
-        record = cursor.fetchone()
-        if not record:
-            print("\nThere are no tasks that match or task is already finished.")
-            return
-
-        cursor.execute("UPDATE task SET date_Completed = CURDATE(), task_status = 1 WHERE taskno = %s", (taskNo,))
-        db.commit()
-        print("\nTask is Marked as Done.")
-
-    except mariadb.Error as e:
-        print(f"Failed to mark task done. Error: {e}")
-
-# Add a Task to a Category
-def addTasktoCategory():
-    try:
-        if checkTasks() == False:
-            return
-        taskNo = input("\nEnter task number: ")
+        print("\nEnter 0 to cancel.")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+                return
         # check if taskNo exists first in database, if not return from function
         cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
         record = cursor.fetchone()
         if not record:
             print("\nThere are no tasks that match.")
             return
+        taskStatus = str(record[6])
+        if taskStatus == "0":
+            cursor.execute("UPDATE task SET date_Completed = CURDATE(), task_status = 1 WHERE taskno = %s", (taskNo,))
+            db.commit()
+            print(f"\nTask #{taskNo} is marked as done.")
+            return
+        else:
+            print(f"\nTask #{taskNo} is already marked as done.")
+            return
         
-        categoryNo = input("\nEnter category number: ")
+    except mariadb.Error as e:
+        print(f"Failed to mark the task as done. Error: {e}")
+
+# Add a Task to a Category
+def addTaskToCategory(db, cursor):
+    try:
+        if checkTasks() == False:
+            return
+        if checkCategory() == False:
+            return
+        print("\nEnter 0 to cancel.")
+        while True:
+            taskNo = input("\nEnter task number: ")
+            if taskNo != "":
+                break
+            else:
+                "\nTask number must not be empty."
+        if taskNo == "0":
+                return
+        # check if taskNo exists first in database, if not return from function
+        cursor.execute("SELECT * FROM task WHERE taskno = %s", (taskNo,))
+        record1 = cursor.fetchone()
+        if not record1:
+            print("\nThere are no tasks that match.")
+            return
+        while True:
+            categoryNo = input("\nEnter category number: ")
+            if categoryNo != "":
+                break
+            else:
+                "\nCategory number must not be empty."
+        if categoryNo == "0":
+                return
         # check if categoryNo exists first in database, if not return from function
         cursor.execute("SELECT * FROM category WHERE categoryno = %s", (categoryNo,))
-        record = cursor.fetchone()
-        if not record:
+        record2 = cursor.fetchone()
+        if not record2:
             print("\nThere are no categories that match.")
             return
-
+        categoryName = str(record2[1])
         cursor.execute("INSERT INTO belongsto VALUES (%s, %s)", (taskNo, categoryNo))
         db.commit()
-        print("\nAdded task to category successfully.")
+        print(f"\nAdded Task #{taskNo} to Category #{categoryNo} {categoryName} successfully.")
         
     except mariadb.Error as e:
         print(f"Failed to add task to category. Error: {e}")
@@ -410,6 +522,8 @@ def viewOptions(option):
             viewTaskPerDay()
         case '2':
             viewTaskPerMonth()
+        case '0':
+            taskMenu()
         case _:
             print("\nInvalid input.")
 
@@ -418,27 +532,32 @@ def viewTaskPerDay():
     try:
         if checkTasks() == False:
             return
+        print("\nEnter 0 to cancel.")
         while True:
             date = input("\nEnter date of tasks to be viewed (YYYY-MM-DD): ")
             if date != "":
                 if validateDateFormat(date) == True:
                     break
+            elif date == "0":
+                break
             else:
                 print("\nDate created must not be empty.")
+        if date == "0":
+                return
         cursor.execute("SELECT * FROM task WHERE deadline = %s", (date,))
         data = cursor.fetchall()
         if not data:
-            print("\nThere are no tasks for this date.")
+            print("\nThere are no tasks for this day.")
             return
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print("\nTask No. ", row[0])
-            print("Task Title: ", row[1])
-            print("Date Created: ", row[2])
-            print("Deadline: ", row[3])
-            print("Date Completed: ", row[4])
-            print("Task Description: ", row[5])
+            print(f"\nTask #{row[0]}: {row[1]}")
+            print(f"Date Created: {row[2]}")
+            print(f"Deadline: {row[3]}")
+            print(f"Date Completed: {row[4]}")
+            print(f"Task Description: {row[5]}")
+            print(f"Task Status (0 - Ongoing, 1 - Finished): {row[6]}")
     except mariadb.Error as e:
         print(f"Failed to add task to category. Error: {e}")
 
@@ -447,50 +566,45 @@ def viewTaskPerMonth():
     try:
         if checkTasks() == False:
             return
+        print("\nEnter 0 to cancel.")
         while True:
-            month = input("\nEnter month number of tasks to be viewed (MM): ")
-            if month != "" :
-                if month.isnumeric() and 0 < int(month) and 13 > int(month) :
-                    break
-                else:
-                    print("\nInvalid month number.")
-            else:
-                print("\nMonth number must not be empty.")
-        while True:
-            year = input("\nEnter year of the month (YYYY): ")
-            if year != "":
+            date = input("\nEnter year and month number of tasks to be viewed (YYYY-MM): ")
+            if date != "" :
                 try:
-                    datetime.strptime(year, "%Y")
+                    datetime.strptime(date, "%Y-%m")
                     break
                 except ValueError:
-                    print("Invalid year. Year format should be YYYY-MM-DD.")
+                    print("\nInvalid year and month. Year and month format should be YYYY-MM.")
+            elif date == "0":
+                return
             else:
-                print("\nMonth name must not be empty.")
-        cursor.execute("SELECT * FROM task WHERE MONTH(deadline) = %s AND YEAR(deadline) = %s", (month, year))
+                print("\nYear and month number must not be empty.")
+        if date == "0":
+                return
+        cursor.execute("SELECT * FROM task WHERE deadline LIKE %s", (date + "%",))
         data = cursor.fetchall()
         if not data:
-            print("\nThere are no tasks for this specific month and year.")
+            print("\nThere are no tasks for this month.")
             return
         print("\nTotal number of tasks: ", cursor.rowcount)
         print("\nTo-Do List")
         for row in data:
-            print("\nTask No. ", row[0])
-            print("Task Title: ", row[1])
-            print("Date Created: ", row[2])
-            print("Deadline: ", row[3])
-            print("Date Completed: ", row[4])
-            print("Task Description: ", row[5])
+            print(f"\nTask #{row[0]}: {row[1]}")
+            print(f"Date Created: {row[2]}")
+            print(f"Deadline: {row[3]}")
+            print(f"Date Completed: {row[4]}")
+            print(f"Task Description: {row[5]}")
+            print(f"Task Status (0 - Ongoing, 1 - Finished): {row[6]}")
     except mariadb.Error as e:
-        print(f"Failed to add task to category. Error: {e}")
+        print(f"Failed to view tasks. Error: {e}")
 
-# app loop which matches choice to its corresponding action
-def app_loop(choice):
+def taskMenu(choice):
     while choice != 0:
         match choice:
             case '1':
                 addTask(db, cursor)
             case '2':
-                print('\n------EDIT TASK------', '[1] Edit Task Title', '[2] Edit Date Created', '[3] Edit Deadline', '[4] Edit Date Completed', '[5] Edit Task Description', '[0] Back', sep='\n')
+                print('\n------EDIT TASK------', '[1] Edit Task Title', '[2] Edit Deadline', '[3] Edit Date Completed', '[4] Edit Task Description', '[0] Back', sep='\n')
                 option = input("\nEdit option: ")
                 editOptions(option)
             case '3':
@@ -498,21 +612,54 @@ def app_loop(choice):
             case '4':
                 viewAllTask()
             case '5':
-                markTask()
+                markTaskAsDone(db, cursor)
             case '6':
-                addCategory(db, cursor)
+                addTaskToCategory(db, cursor)
             case '7':
-                editCategoryName(db, cursor)
-            case '8':
-                deleteCategory(db, cursor)
-            case '9':
-                viewCategory()
-            case '10':
-                addTasktoCategory()
-            case '11':
-                print('\n------VIEW TASK PER DAY, MONTH------', '[1] View Task per Day', '[2] View Task per Month', sep='\n')
-                option = input("\nEdit option: ")
+                print('\n------VIEW TASK PER DAY, MONTH------', '[1] View Task per Day', '[2] View Task per Month', '[0] Back', sep='\n')
+                option = input("\nView option: ")
                 viewOptions(option)
+            case '0':
+                print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+                option = input("\nChoice: ")
+                mainMenu(option)
+            case _:
+                print("\nInvalid input.")
+        print('\n------TASK MENU------', '[1] Add Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+        choice = input("\nChoice: ")
+
+# app loop which matches choice to its corresponding action
+def categoryMenu(choice):
+    while choice != 0:
+        match choice:
+            case '1':
+                addCategory(db, cursor)
+            case '2':
+                editCategoryName(db, cursor)
+            case '3':
+                deleteCategory(db, cursor)
+            case '4':
+                viewCategory()
+            case '0':
+                print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+                option = input("\nChoice: ")
+                mainMenu(option)
+            case _:
+                print("\nInvalid input.")
+        print('\n------CATEGORY MENU------', '[1] Add Category', '[2] Edit Category', '[3] Delete Category', '[4] View Category', '[0] Return', sep='\n')
+        choice = input("\nChoice: ")
+        
+def mainMenu(choice):
+    while choice != 0:
+        match choice:
+            case '1':
+                print('\n------TASK MENU------', '[1] Add Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add a Task to a Category', '[7] View Task (per day/per month)', '[0] Return', sep='\n')
+                option = input("\nChoice: ")
+                taskMenu(option)
+            case '2':
+                print('\n------CATEGORY MENU------', '[1] Add Category', '[2] Edit Category', '[3] Delete Category', '[4] View Category', '[0] Return', sep='\n')
+                option = input("\nChoice: ")
+                categoryMenu(option)
             case '0':
                 cursor.close()
                 db.close()
@@ -520,12 +667,9 @@ def app_loop(choice):
                 quit()
             case _:
                 print("\nInvalid input.")
-        print('\n------TO-DO APP------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add Category', '[7] Edit Category', '[8] Delete Category', '[9] View Category', '[10] Add a Task to a Category', '[11] View Task (per day, month)', '[0] Exit', sep='\n')
+        print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
         choice = input("\nChoice: ")
-        
-def main():
-    print('\n------TO-DO APP------', '[1] Add/Create Task', '[2] Edit Task', '[3] Delete Task', '[4] View All Tasks', '[5] Mark Task as done', '[6] Add Category', '[7] Edit Category', '[8] Delete Category', '[9] View Category', '[10] Add a Task to a Category', '[11] View Task (per day, month)', '[0] Exit', sep='\n')
-    choice = input("\nChoice: ")
-    app_loop(choice)
 
-main()
+print('\n------TO-DO APP------', '[1] Task Menu', '[2] Category Menu', '[0] Exit', sep='\n')
+choice = input("\nChoice: ")
+mainMenu(choice)
