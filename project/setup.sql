@@ -7,7 +7,7 @@ CREATE TABLE task(
     date_created DATE NOT NULL,
     deadline DATE NOT NULL,
     date_completed DATE NULL,
-    task_description VARCHAR(100),
+    task_description VARCHAR(100) NOT NULL,
     task_status BOOLEAN DEFAULT 0 NOT NULL,
     CONSTRAINT task_taskno_pk PRIMARY KEY(taskno)
     );
